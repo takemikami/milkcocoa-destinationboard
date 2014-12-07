@@ -1,0 +1,91 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>destination board</title>
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="http://cdn.mlkcca.com/v0.2.8/milkcocoa.js"></script>
+<script>
+$(function() {
+  var milkcocoa = new MilkCocoa("https://io-ri363aa6l.mlkcca.com");
+  var ds = milkcocoa.DataStore("destination");
+
+  // メンバ一覧の初期化
+  var members = [
+    "Aさん", "Bさん", "Cさん"
+  ];
+  var memSelect = $("#set_member");
+  for(var i=0; i<members.length; i++) {
+    memSelect.append("<option name='mem_" + i + "'>" + members[i] + "</option>");
+  }
+
+  // データストアから情報をとってくる
+  var query = ds.query();
+  query.limit(30);
+  query.done(function(data) {
+    for(var i=0; i<data.length; i++) {
+      writeDestination(data[i].id, data[i].destination, data[i].comeback_time);
+    }
+  });
+  
+  // イベントを監視 set
+  ds.on("set", function(e) {
+	var d_id = e.id;
+	var d_value = e.value;
+	writeDestination(e.id, e.value.destination, e.value.comeback_time);
+  });
+
+  // 行き先指定
+  $("#set_desttime").click(function() {
+    var mem = $("#set_member").val();
+    var dest = $("#set_destination").val();
+    var time = $("#set_time").val();
+	if(dest == "" || time == "") {
+	  alert("行き先と戻り時間を指定して下さい");
+	  return;
+	}
+	var id = mem;
+	var obj = {destination: dest, comeback_time: time};
+	ds.set(id, obj);
+  });
+  
+  // 行き先一覧を表示
+  function writeDestination(id, dest, time) {
+    var dstTbl = $("#desttable");
+	var children = dstTbl.find("tr");
+	var exist=false;
+	for(var i=0; i<children.length; i++) {
+	  var childid = children.eq(i).attr('id');
+	  if(childid == id) {
+	    children.eq(i).find('td').eq(0).html(id);
+	    children.eq(i).find('td').eq(1).html(dest);
+	    children.eq(i).find('td').eq(2).html(time);
+        exist = true;
+	  }
+	}
+	if(!exist) {
+	  dstTbl.append("<tr id='" + id + "'><td>" + id + "</td><td>" + dest + "</td><td>" + time + "</td></tr>");
+	}
+  }
+});
+</script>
+</head>
+<body>
+
+<h1>destination board</h1>
+
+<div id="destination_box">
+担当者： <select id="set_member"></select>
+行き先: <input type="text" id="set_destination"></input>
+戻り: <input type="text" id="set_time"></input>
+<button id="set_desttime">設定</button>
+<div>
+
+<div id="destination_list">
+<h2>行き先一覧</h2>
+<table id="desttable" border="1">
+  <tr><td>担当者</td><td>行き先</td><td>戻り時間</td></tr>
+</table>
+</div>
+
+</body>
+</html>
